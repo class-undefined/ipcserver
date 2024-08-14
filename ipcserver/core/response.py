@@ -60,12 +60,12 @@ class IpcResponse:
         return self.data
 
     @classmethod
-    def ok(cls, message: str = "处理成功", data: DataType = None, code=IpcStatus.OK):
+    def ok(cls, data: DataType = None, message: str = "处理成功", code=IpcStatus.OK):
         return cls(data=data, code=code, message=message)
 
     @classmethod
     def error(
-        cls, message: str = "处理失败", data: DataType = None, code=IpcStatus.BAD_REQUEST
+        cls, data: DataType = None, message: str = "处理失败", code=IpcStatus.BAD_REQUEST
     ):
         return cls(data=data, code=code, message=message)
 

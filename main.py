@@ -5,8 +5,7 @@ app = IpcServer()
 
 @app.route("/hello")
 async def hello(request: "IpcRequest") -> "IpcResponse":
-    print(request.header)
-    return IpcResponse.ok("Hello, World!")
+    return IpcResponse.ok(request.body)
 
 
 if __name__ == "__main__":

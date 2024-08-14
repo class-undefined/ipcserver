@@ -6,10 +6,29 @@ from .request import IpcRequest
 from .response import IpcResponse
 import socket
 import os
+import traceback
 if TYPE_CHECKING:
     from .router import Route
 
 ExceptionHandler = Callable[["IpcRequest"], "IpcResponse"]
+
+
+def recv_msg(conn: socket.socket):
+    # 先读取4字节的消息长度
+    raw_msglen = conn.recv(8)
+    if not raw_msglen:
+        return None
+    # 解析消息长度
+    msglen = int.from_bytes(raw_msglen, byteorder='big')
+    # 然后根据长度读取消息体
+    data = b''
+    while len(data) < msglen:
+        packet = conn.recv(msglen - len(data))
+        if not packet:
+            return None
+        data += packet
+    # 解码消息体
+    return data
 
 
 class IpcServer:
@@ -92,13 +111,14 @@ class IpcServer:
             with conn:
                 Console.log("Python socket connected by", addr)
                 while True:
-                    data = conn.recv(self.config.recv_limit)
+                    data = recv_msg(conn)
                     if not data:
                         Console.warn("Python socket disconnected by", addr)
                         break
                     try:
                         req = IpcRequest.from_data(data)
                     except Exception as e:
-                        Console.error("Invalid request:", e)
+                        Console.error("Invalid request:",
+                                      traceback.format_exc())
                     response = await self.handle_request(req)
                     conn.sendall(response.to_bytes())
