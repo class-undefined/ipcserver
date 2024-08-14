@@ -1,4 +1,0 @@
-[LOG][2024-08-14 13:48:09] Python socket is listening. Socket:  /tmp/ipcserver.sock
-[LOG][2024-08-14 13:55:31] Python socket is listening. Socket:  /tmp/ipcserver.sock
-[LOG][2024-08-14 13:56:56] Route(path=/hello)
-[LOG][2024-08-14 13:56:56] Python socket is listening. Socket:  /tmp/ipcserver.sock
