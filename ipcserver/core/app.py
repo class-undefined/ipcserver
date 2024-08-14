@@ -40,10 +40,16 @@ class IpcServer:
     def add_exception_handler(self, exception: Type[Exception], handler: ExceptionHandler):
         self.exception_handlers[exception] = handler
 
+    def description(self):
+        print("Registered routes:")
+        for path, scope in self.scopes.items():
+            Console.log(f"{scope}")
+
     def setup(self):
         """初始化路由"""
         for route in self.router.routes:
             self.scopes[route.path] = route
+        self.description()
         return self
 
     def match_route(self, path: str):

@@ -1,6 +1,12 @@
-from .core.app import IpcServer
 import asyncio
+from ipcserver import IpcServer, IpcResponse
+app = IpcServer()
+
+
+@app.route("/hello")
+async def hello() -> "IpcResponse":
+    return IpcResponse.ok("Hello, World!")
 
 
 if __name__ == "__main__":
-    asyncio.run(IpcServer().run())
+    asyncio.run(app.run())
