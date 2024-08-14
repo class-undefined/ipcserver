@@ -33,6 +33,6 @@ class IpcConfig:
     def default(cls):
         config = {
             "sock": "/tmp/ipcserver.sock",
-            "recv_limit": 1024,
+            "recv_limit": 1024 * 1024 * 50,  # 50MB
         }
         return cls.from_dict(config)
