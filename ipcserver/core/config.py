@@ -2,9 +2,8 @@ from typing import *
 
 
 class IpcConfig:
-    def __init__(self, sock: str, recv_limit: int = 1024):
+    def __init__(self, sock: str):
         self.sock = sock  # sock 文件路径
-        self.recv_limit = recv_limit  # 接收数据大小限制
 
     def update(self, *args, **kwargs):
         if len(args) == 1 and args[0] is None:
@@ -18,7 +17,6 @@ class IpcConfig:
     def to_dict(self):
         return {
             "sock": self.sock,
-            "recv_limit": self.recv_limit,
         }
 
     @classmethod
@@ -33,6 +31,5 @@ class IpcConfig:
     def default(cls):
         config = {
             "sock": "/tmp/ipcserver.sock",
-            "recv_limit": 1024 * 1024 * 50,  # 50MB
         }
         return cls.from_dict(config)

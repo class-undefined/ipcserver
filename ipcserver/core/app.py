@@ -4,30 +4,25 @@ from ..utils import Console
 from .config import IpcConfig
 from .request import IpcRequest
 from .response import IpcResponse
-import socket
-import os
+import asyncio
 import traceback
+from asyncio import StreamReader, StreamWriter
+
 if TYPE_CHECKING:
     from .router import Route
 
 ExceptionHandler = Callable[["IpcRequest"], "IpcResponse"]
 
 
-def recv_msg(conn: socket.socket):
-    # 先读取4字节的消息长度
-    raw_msglen = conn.recv(8)
+async def recv_msg(reader: StreamReader):
+    # 读取8字节的消息长度
+    raw_msglen = await reader.readexactly(8)
     if not raw_msglen:
         return None
     # 解析消息长度
     msglen = int.from_bytes(raw_msglen, byteorder='big')
-    # 然后根据长度读取消息体
-    data = b''
-    while len(data) < msglen:
-        packet = conn.recv(msglen - len(data))
-        if not packet:
-            return None
-        data += packet
-    # 解码消息体
+    # 根据长度读取消息体
+    data = await reader.readexactly(msglen)
     return data
 
 
@@ -76,21 +71,11 @@ class IpcServer:
         route = self.scopes.get(path)
         return route
 
-    def __init_socket(self, sock: str):
-        assert sock, "Socket path is required"
-        if os.path.exists(sock):
-            os.remove(sock)
-        server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        server.bind(sock)
-        server.listen(1)
-        Console.log("Python socket is listening. Socket: ", sock)
-        return server
-
     async def handle_request(self, request: "IpcRequest") -> "IpcResponse":
         route = self.match_route(request.header.path)
-        Console.log(request)
         if route:
             try:
+                Console.log(request)
                 return await route.func(request)
             except Exception as e:
                 handler = self.exception_handlers.get(type(e))
@@ -102,23 +87,34 @@ class IpcServer:
             Console.error("Route not found:", request.header.path)
             return IpcResponse.error("Route not found")
 
+    async def handle_connection(self, reader: StreamReader, writer: StreamWriter):
+        addr = writer.get_extra_info('peername')
+        Console.log("Python socket connected by", addr)
+        try:
+            while True:
+                data = await recv_msg(reader)
+                if not data:
+                    Console.warn("Python socket disconnected by", addr)
+                    break
+                try:
+                    req = IpcRequest.from_data(data)
+                except Exception as e:
+                    Console.error("Invalid request:", traceback.format_exc())
+                response = await self.handle_request(req)
+                writer.write(IpcResponse.make_bytes(req, response))
+                await writer.drain()
+        except asyncio.IncompleteReadError:
+            Console.warn("Python socket disconnected by", addr)
+        finally:
+            writer.close()
+            await writer.wait_closed()
+
     async def run(self, config: Optional["IpcConfig"] = None):
         self.config.update(config)
         self.setup()
-        server = self.__init_socket(self.config.sock)
-        while True:
-            conn, addr = server.accept()
-            with conn:
-                Console.log("Python socket connected by", addr)
-                while True:
-                    data = recv_msg(conn)
-                    if not data:
-                        Console.warn("Python socket disconnected by", addr)
-                        break
-                    try:
-                        req = IpcRequest.from_data(data)
-                    except Exception as e:
-                        Console.error("Invalid request:",
-                                      traceback.format_exc())
-                    response = await self.handle_request(req)
-                    conn.sendall(response.to_bytes())
+        server = await asyncio.start_unix_server(
+            self.handle_connection, path=self.config.sock)
+
+        Console.log("Python socket is listening. Socket: ", self.config.sock)
+        async with server:
+            await server.serve_forever()

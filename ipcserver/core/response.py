@@ -2,6 +2,8 @@ from enum import IntEnum
 from typing import *
 from colorama import Fore
 import msgpack
+if TYPE_CHECKING:
+    from .request import IpcRequest
 
 
 class IpcStatus(IntEnum):
@@ -60,6 +62,10 @@ class IpcResponse:
         return self.data
 
     @classmethod
+    def make_bytes(cls, request: "IpcRequest", response: "IpcResponse") -> bytes:
+        return msgpack.packb([request.header.id, response.to_dict()])
+
+    @classmethod
     def ok(cls, data: DataType = None, message: str = "处理成功", code=IpcStatus.OK):
         return cls(data=data, code=code, message=message)
 
@@ -79,9 +85,7 @@ class IpcResponse:
             suffix = "..."
         message = self.message[:max_length] + suffix  # 超出 max_length 的部分省略
         begin = None
-        if self.is_cache():
-            begin = Fore.YELLOW
-        elif self.is_normal():
+        if self.is_normal():
             begin = Fore.GREEN
         else:
             begin = Fore.RED
