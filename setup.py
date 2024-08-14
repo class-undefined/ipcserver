@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 setup(
     name="ipcserver",
-    version="0.1.2",
+    version="0.1.4",
     packages=find_packages(exclude=['tests', 'tests.*']),
     description="A fastapi-like but a sock server",
     install_requires=[
