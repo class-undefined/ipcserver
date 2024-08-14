@@ -11,13 +11,15 @@ pip install ipcserver
 ## Usage
 
 ```python
-from ipcserver import IPCServer, IPCResponse
+from ipcserver import IPCServer, IPCResponse, IpcRequest
 import asyncio
 
 
 app = IPCServer()
+
+
 @app.route('/hello')
-async def hello() -> "IPCResponse": # `async`, return IPCResponse and typing is required
+async def hello(request: "IpcRequest") -> "IPCResponse": # `async`, return IPCResponse and typing is required
     return IPCResponse.ok('Hello World')
 
 if __name__ == '__main__':

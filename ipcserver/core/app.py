@@ -96,6 +96,9 @@ class IpcServer:
                     if not data:
                         Console.warn("Python socket disconnected by", addr)
                         break
-                    req = IpcRequest.from_data(data)
+                    try:
+                        req = IpcRequest.from_data(data)
+                    except Exception as e:
+                        Console.error("Invalid request:", e)
                     response = await self.handle_request(req)
                     conn.sendall(response.to_bytes())
