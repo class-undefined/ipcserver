@@ -19,6 +19,14 @@ class IpcServer:
         self.scopes: Dict[str, "Route"] = {}
         self.exception_handlers: Dict[type[Exception], ExceptionHandler] = {}
 
+    def route(self, path: str, name: Optional[str] = None, description: Optional[str] = None):
+        """路由装饰器"""
+        def decorator(func: Callable) -> Callable:
+            self.router.add_route(path, func, name=name,
+                                  description=description)
+            return func
+        return decorator
+
     def include_router(self, router: APIRouter, prefix: str = ''):
         self.router.include_router(router, prefix)
 
