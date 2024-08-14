@@ -5,7 +5,8 @@ setup(
     packages=find_packages(exclude=['tests', 'tests.*']),
     description="A fastapi-like but a sock server",
     install_requires=[
-        line.strip() for line in open('requirements.txt')
+        "colorama>=0.4.6",
+        "msgpack>=1.0.8"
     ],
     author="class-undefined",
     author_email="luyukai@tsinghua.edu.cn",
