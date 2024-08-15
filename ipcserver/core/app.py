@@ -93,6 +93,7 @@ class IpcServer:
     async def handle_connection(self, reader: StreamReader, writer: StreamWriter):
         addr = writer.get_extra_info('peername')
         Console.log("Python socket connected by", addr)
+        req = None
         try:
             while True:
                 data = await recv_msg(reader)
@@ -102,7 +103,7 @@ class IpcServer:
                 try:
                     req = IpcRequest.from_data(data)
                 except Exception as e:
-                    Console.error("Invalid request:", traceback.format_exc())
+                    Console.error(f"Invalid request: {traceback.format_exc()}")
                     writer.write(IpcResponse.error(
                         "Invalid request").to_bytes())
                     continue
