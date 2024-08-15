@@ -4,8 +4,10 @@ from ..utils import Console
 from .config import IpcConfig
 from .request import IpcRequest
 from .response import IpcResponse
+from .header import IpcHeader
 import asyncio
 import traceback
+import uuid
 from asyncio import StreamReader, StreamWriter
 
 if TYPE_CHECKING:
@@ -32,6 +34,7 @@ class IpcServer:
         self.router = APIRouter()
         self.scopes: Dict[str, "Route"] = {}
         self.exception_handlers: Dict[type[Exception], ExceptionHandler] = {}
+        self.clients: Dict[str, StreamWriter] = {}
 
     def route(self, path: str, name: Optional[str] = None, description: Optional[str] = None):
         """路由装饰器"""
@@ -72,7 +75,7 @@ class IpcServer:
         return route
 
     async def handle_request(self, request: "IpcRequest") -> "IpcResponse":
-        route = self.match_route(request.header.path)
+        route = self.match_route(request.path)
         if route:
             try:
                 Console.log(request)
@@ -84,7 +87,7 @@ class IpcServer:
                 else:
                     return IpcResponse.error(str(e))
         else:
-            Console.error("Route not found:", request.header.path)
+            Console.error("Route not found:", request.path)
             return IpcResponse.error("Route not found")
 
     async def handle_connection(self, reader: StreamReader, writer: StreamWriter):
@@ -100,14 +103,31 @@ class IpcServer:
                     req = IpcRequest.from_data(data)
                 except Exception as e:
                     Console.error("Invalid request:", traceback.format_exc())
+                    writer.write(IpcResponse.error(
+                        "Invalid request").to_bytes())
+                    continue
+                if req.clientId not in self.clients:
+                    self.clients[req.clientId] = writer
                 response = await self.handle_request(req)
                 writer.write(IpcResponse.make_bytes(req, response))
                 await writer.drain()
         except asyncio.IncompleteReadError:
             Console.warn("Python socket disconnected by", addr)
         finally:
+            if req.clientId in self.clients:
+                self.clients.pop(req.clientId)
             writer.close()
             await writer.wait_closed()
+
+    async def send(self, clientId: str, event: str, data: Any):
+        writer = self.clients.get(clientId)
+        if writer:
+            header = IpcHeader(compress=False)
+            req = IpcRequest(id=str(uuid.uuid4()), clientId=clientId,
+                             path=event, header=header, body=data)
+            response = IpcResponse.ok(data)
+            writer.write(IpcResponse.make_bytes(req, response))
+            await writer.drain()
 
     async def run(self, config: Optional["IpcConfig"] = None):
         self.config.update(config)

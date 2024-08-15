@@ -1,18 +1,30 @@
 import msgpack
 from typing import *
-from .header import Header
+from .header import IpcHeader
 
 
 class IpcRequest:
-    def __init__(self, header: "Header", body: Any):
+    def __init__(self, id: str, clientId: str, path: str, header: "IpcHeader", body: Any):
+        self.id = id
+        self.clientId = clientId
+        self.path = path
         self.header = header
         self.body = body
 
     @classmethod
     def from_data(cls, data: bytes):
-        [path, header, body] = msgpack.unpackb(data)
-        header = Header(path=path, **header)
-        return cls(header=header, body=body)
+        data = msgpack.unpackb(data)
+        data = {**data, "header": IpcHeader(**data["header"])}
+        return cls(**data)
 
     def __str__(self) -> str:
-        return f"IpcRequest(header={self.header}, body={self.body})"
+        return f"IpcRequest(id={self.id}, path={self.path}, header={self.header}, body={self.body})"
+
+    def to_dict(self) -> Dict:
+        return {
+            "id": self.id,
+            "clientId": self.clientId,
+            "path": self.path,
+            "header": self.header.to_dict(),
+            "body": self.body,
+        }

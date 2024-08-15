@@ -17,6 +17,11 @@ class IpcStatus(IntEnum):
     BAD_GATEWAY = 502
 
 
+class ResponseType(IntEnum):
+    RequestReply = 0  # 针对 request 的回复
+    Active = 1  # 主动推送
+
+
 DataType = Union[Dict, List, None]
 
 
@@ -63,7 +68,7 @@ class IpcResponse:
 
     @classmethod
     def make_bytes(cls, request: "IpcRequest", response: "IpcResponse") -> bytes:
-        return msgpack.packb([request.header.id, response.to_dict()])
+        return msgpack.packb([request.to_dict(), response.to_dict()])
 
     @classmethod
     def ok(cls, data: DataType = None, message: str = "处理成功", code=IpcStatus.OK):
