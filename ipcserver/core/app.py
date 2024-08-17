@@ -3,7 +3,7 @@ from .router import APIRouter
 from ..utils import Console
 from .config import IpcConfig
 from .request import IpcRequest
-from .response import IpcResponse
+from .response import IpcResponse, IpcStatus
 from .header import IpcHeader
 import asyncio
 import traceback
@@ -105,7 +105,7 @@ class IpcServer:
                 except Exception as e:
                     Console.error(f"Invalid request: {traceback.format_exc()}")
                     writer.write(IpcResponse.error(
-                        "Invalid request").to_bytes())
+                        data=None, message=str(e), code=IpcStatus.INTERNAL_SERVER_ERROR).to_bytes())
                     continue
                 if req.clientId not in self.clients:
                     self.clients[req.clientId] = writer
