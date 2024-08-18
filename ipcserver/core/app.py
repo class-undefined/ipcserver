@@ -85,7 +85,7 @@ class IpcServer:
                 if handler:
                     return await handler(request)
                 else:
-                    return IpcResponse.error(str(e))
+                    return IpcResponse.error(message=str(e))
         else:
             Console.error("Route not found:", request.path)
             return IpcResponse.error("Route not found")
