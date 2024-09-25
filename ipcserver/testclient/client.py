@@ -30,7 +30,7 @@ class TestClient:
         app.include_router(demo())
 
         @ipctest
-        def test01():
+        async def test01():
             client = TestClient(app)
             r = await client.send("/demo/")
             assert r.is_normal() == True
