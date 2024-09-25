@@ -1,30 +1,30 @@
 import asyncio
-from ipcserver import IpcServer, IpcResponse, IpcRequest, APIRouter
+from ipcserver import IpcServer, IpcResponse, IpcRequest, APIRouter, TestClient, ipctest
 
 app = IpcServer()
 
 
-def virtuoso():
-    v = APIRouter("/virtuoso")
+def demo():
+    v = APIRouter("/demo")
 
-    @v.route("/run")
+    @v.route("/")
     async def run(request: IpcRequest) -> IpcResponse:
-        return IpcResponse.ok("run")
+        return IpcResponse.ok("ok")
 
-    @v.route("/stop")
+    @v.route("/hello")
     async def stop(request: IpcRequest) -> IpcResponse:
-        return IpcResponse.ok("stop")
-
-    @v.route("/clients")
-    async def stop(request: IpcRequest) -> IpcResponse:
-        print(app.clients)
-        await app.send(request.clientId, "/msg", 123)
-        return IpcResponse.ok("stop")
-
+        return IpcResponse.ok("hello")
     return v
 
 
-app.include_router(virtuoso())
+app.include_router(demo())
+
+
+@ipctest
+async def test01():
+    client = TestClient(app)
+    r = await client.send("/demo/")
+    assert r.is_normal() == True
 
 
 if __name__ == "__main__":

@@ -6,7 +6,9 @@ setup(
     description="A fastapi-like but a sock server",
     install_requires=[
         "colorama>=0.4.6",
-        "msgpack>=1.0.8"
+        "msgpack>=1.0.8",
+        "pytest-asyncio",
+        "pytest"
     ],
     author="class-undefined",
     author_email="luyukai@tsinghua.edu.cn",

@@ -1,2 +1,4 @@
 colorama==0.4.6
 msgpack==1.0.8
+pytest-asyncio
+pytest
