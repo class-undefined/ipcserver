@@ -19,7 +19,7 @@ class TestClient:
 
         app = IpcServer()
         def demo():
-            v = APIRouter("/")
+            v = APIRouter("/demo")
 
             @v.route("/")
             async def run(request: IpcRequest) -> IpcResponse:
