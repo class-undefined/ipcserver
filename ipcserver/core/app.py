@@ -85,6 +85,7 @@ class IpcServer:
                 if handler:
                     return await handler(request)
                 else:
+                    Console.error(f"Invalid request: {traceback.format_exc()}")
                     return IpcResponse.error(message=str(e))
         else:
             Console.error("Route not found:", request.path)
