@@ -105,21 +105,31 @@ class IpcServer:
                     req = IpcRequest.from_data(data)
                 except Exception as e:
                     Console.error(f"Invalid request: {traceback.format_exc()}")
-                    writer.write(IpcResponse.error(
-                        data=None, message=str(e), code=IpcStatus.INTERNAL_SERVER_ERROR).to_bytes())
+                    try:
+                        writer.write(IpcResponse.error(
+                            data=None, message=str(e), code=IpcStatus.INTERNAL_SERVER_ERROR).to_bytes())
+                        await writer.drain()
+                    except (BrokenPipeError, ConnectionResetError):
+                        Console.warn(
+                            "Cannot send error response, client disconnected.")
                     continue
                 if req.clientId not in self.clients:
                     self.clients[req.clientId] = writer
-                response = await self.handle_request(req)
-                writer.write(IpcResponse.make_bytes(req, response))
-                await writer.drain()
+                try:
+                    response = await self.handle_request(req)
+                    writer.write(IpcResponse.make_bytes(req, response))
+                    await writer.drain()
+                except (BrokenPipeError, ConnectionResetError):
+                    Console.warn("Cannot send response, client disconnected.")
+                    break
         except asyncio.IncompleteReadError:
             Console.warn("Python socket disconnected by", addr)
         finally:
             if req.clientId in self.clients:
                 self.clients.pop(req.clientId)
             writer.close()
-            await writer.wait_closed()
+            if writer.is_closing() is False:
+                await writer.wait_closed()
 
     async def send(self, clientId: str, event: str, data: Any):
         writer = self.clients.get(clientId)
