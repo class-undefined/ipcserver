@@ -18,7 +18,7 @@ class IpcRequest:
         return cls(**data)
 
     def __str__(self) -> str:
-        return f"IpcRequest(id={self.id}, path={self.path}, header={self.header}, body={self.body})"
+        return f"IpcRequest(id={self.id}, clientId={self.clientId}, path={self.path}, header={self.header}, body={self.body})"
 
     def to_dict(self) -> Dict:
         return {
