@@ -121,7 +121,7 @@ class IpcClient:
         await self.writer.wait_closed()
 
 
-class SyncIpcClient:
+class IpcSyncClient:
     def __init__(self, sock_path: str, timeout: float = 5.0):
         """初始化同步IPC客户端"""
         self.sock_path = sock_path
