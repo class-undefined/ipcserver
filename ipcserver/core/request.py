@@ -12,10 +12,14 @@ class IpcRequest:
         self.body = body
 
     @classmethod
-    def from_data(cls, data: bytes):
-        data = msgpack.unpackb(data)
-        data = {**data, "header": IpcHeader(**data["header"])}
-        return cls(**data)
+    def from_data(cls, data: bytes) -> "IpcRequest":
+        """从字节数据创建请求对象"""
+        try:
+            # 解包数据
+            unpacked = msgpack.unpackb(data)
+            return cls(**unpacked)
+        except Exception as e:
+            raise ValueError(f"Invalid request data: {e}")
 
     def __str__(self) -> str:
         return f"IpcRequest(id={self.id}, clientId={self.clientId}, path={self.path}, header={self.header}, body={self.body})"
