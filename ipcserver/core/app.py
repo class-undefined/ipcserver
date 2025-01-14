@@ -125,7 +125,7 @@ class IpcServer:
         except asyncio.IncompleteReadError:
             Console.warn("Python socket disconnected by", addr)
         finally:
-            if req and req.clientId in self.clients and writer.is_closing():
+            if req.clientId in self.clients:
                 self.clients.pop(req.clientId)
             writer.close()
             if writer.is_closing() is False:

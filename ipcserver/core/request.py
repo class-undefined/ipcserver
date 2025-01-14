@@ -17,6 +17,7 @@ class IpcRequest:
         try:
             # 解包数据
             unpacked = msgpack.unpackb(data)
+            unpacked["header"] = IpcHeader(**unpacked["header"])
             return cls(**unpacked)
         except Exception as e:
             raise ValueError(f"Invalid request data: {e}")
